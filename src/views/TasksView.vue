@@ -102,13 +102,13 @@
               type="date"
               class="input"
               :min="todayStr"
-              @input="syncDeadline"
+              @change="syncDeadline"
             />
             <input
               v-model="timeInput"
               type="time"
               class="input time-input"
-              @input="syncDeadline"
+              @change="syncDeadline"
             />
           </div>
           <p v-if="form.deadline" class="deadline-preview">
@@ -196,9 +196,7 @@ function isShortcutActive(fn: () => Date): boolean {
 
 function syncDeadline() {
   if (dateInput.value) {
-    const localDateStr = `${dateInput.value}T${timeInput.value || '09:00'}:00`
-    const date = new Date(localDateStr)
-    form.value.deadline = date.toISOString()
+    form.value.deadline = `${dateInput.value}T${timeInput.value || '09:00'}:00`
   }
 }
 
