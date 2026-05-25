@@ -86,7 +86,6 @@
 
         <div class="form-group">
           <label>Deadline *</label>
-          <!-- quick shortcuts -->
           <div class="deadline-shortcuts">
             <button
               v-for="s in shortcuts"
@@ -97,7 +96,6 @@
               type="button"
             >{{ s.label }}</button>
           </div>
-          <!-- date + time split inputs -->
           <div class="datetime-inputs">
             <input
               v-model="dateInput"
@@ -167,7 +165,6 @@ const priorities = [
 
 const todayStr = computed(() => new Date().toISOString().split('T')[0])
 
-// deadline shortcuts
 const shortcuts = [
   { label: 'Today', fn: () => addDays(0) },
   { label: 'Tomorrow', fn: () => addDays(1) },
@@ -184,7 +181,8 @@ function addDays(n: number): Date {
 
 function applyShortcut(fn: () => Date) {
   const d = fn()
-  dateInput.value = d.toISOString().split('T')[0]
+  const pad = (n: number) => String(n).padStart(2, '0')
+  dateInput.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   timeInput.value = '09:00'
   syncDeadline()
 }
@@ -192,12 +190,15 @@ function applyShortcut(fn: () => Date) {
 function isShortcutActive(fn: () => Date): boolean {
   if (!dateInput.value) return false
   const d = fn()
-  return d.toISOString().split('T')[0] === dateInput.value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` === dateInput.value
 }
 
 function syncDeadline() {
   if (dateInput.value) {
-    form.value.deadline = `${dateInput.value}T${timeInput.value || '09:00'}`
+    const localDateStr = `${dateInput.value}T${timeInput.value || '09:00'}:00`
+    const date = new Date(localDateStr)
+    form.value.deadline = date.toISOString()
   }
 }
 
@@ -218,7 +219,7 @@ function openEdit(task: Task) {
   form.value = {
     title: task.title,
     description: task.description,
-    deadline: `${dateInput.value}T${timeInput.value}`,
+    deadline: d.toISOString(),
     priority: task.priority,
   }
   showModal.value = true
@@ -241,8 +242,16 @@ async function saveTask() {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Prague'
+  })
 }
+
 function pColor(p: string) { return p === 'high' ? 'fitness' : p === 'medium' ? 'mindfulness' : 'learning' }
 
 onMounted(() => taskStore.fetchTasks())
@@ -277,64 +286,21 @@ onMounted(() => taskStore.fetchTasks())
 .icon-btn { background: none; border: none; cursor: pointer; font-size: 15px; opacity: 0.5; transition: opacity 0.15s; }
 .icon-btn:hover { opacity: 1; }
 
-/* Modal */
 .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
 .modal { width: 100%; max-width: 460px; }
 .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
 
-/* Deadline shortcuts */
-.deadline-shortcuts {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-.shortcut-btn {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 12px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.15s;
-}
+.deadline-shortcuts { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.shortcut-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
 .shortcut-btn:hover { border-color: var(--primary); color: var(--text); }
 .shortcut-btn.active { background: rgba(124,92,252,0.15); border-color: var(--primary); color: var(--primary); font-weight: 600; }
 
-/* Date + time split */
-.datetime-inputs {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
+.datetime-inputs { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .time-input { width: 110px; }
+.deadline-preview { font-size: 12px; color: var(--primary); margin-top: 6px; }
 
-.deadline-preview {
-  font-size: 12px;
-  color: var(--primary);
-  margin-top: 6px;
-}
-
-/* Priority picker */
-.priority-picker {
-  display: flex;
-  gap: 8px;
-}
-.priority-btn {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.15s;
-  text-align: center;
-}
+.priority-picker { display: flex; gap: 8px; }
+.priority-btn { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; text-align: center; }
 .priority-btn:hover { border-color: var(--border-light); color: var(--text); }
 .priority-btn.active.p-low { background: rgba(34,197,94,0.1); border-color: var(--success); color: var(--success); font-weight: 600; }
 .priority-btn.active.p-medium { background: rgba(234,179,8,0.1); border-color: var(--warning); color: var(--warning); font-weight: 600; }
