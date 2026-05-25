@@ -102,13 +102,13 @@
               type="date"
               class="input"
               :min="todayStr"
-              @change="syncDeadline"
+              @input="syncDeadline"
             />
             <input
               v-model="timeInput"
               type="time"
               class="input time-input"
-              @change="syncDeadline"
+              @input="syncDeadline"
             />
           </div>
           <p v-if="form.deadline" class="deadline-preview">
